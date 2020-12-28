@@ -1,0 +1,6 @@
+
+[scanport]
+   # 扫描的目标ip
+   target = "127.0.0.1"
+   port = "8000-30000"
+   count = 100

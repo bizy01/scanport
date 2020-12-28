@@ -4,24 +4,51 @@ import (
 	"github.com/BurntSushi/toml"
 	"sync"
 	"path/filepath"
-	"time"
 )
 
 const simpleCfg  = `
 [scanport]
-   # 扫描的目标ip
-   target = "127.0.0.1"
-   port = "8000-30000"
-   count = 100
+	## 【扫描的协议】
+	# default:
+	# tcp
+	# usage:
+	# tcp,udp
+   	protocol = "tcp"
+   	## 【扫描的目标主机，支持ip, 域名，cidr】
+   	# default:
+   	# 127.0.0.1
+   	# usage:
+   	# (1): 127.0.0.1
+    # (2): 192.168.0.1, 192.168.0.2
+    # (3): 192.168.0.1-20
+    # (4): www.baidu.com
+    # (5): 192.168.1.1/30
+   	target = "127.0.0.1"
+   	## 【端口值】
+   	# default:
+   	# 80
+   	# usage:
+   	# (1): 3000, 8080, 3306
+   	# (2): 3000-10000
+   	# (3): 8080,3000-10000
+   	port = "8000-30000"
+   	## 【扫描并发数】
+   	# default
+   	# 1000
+   	process = 1000
+   	## 【Dial timeout(unit Millisecond)】
+   	# default
+   	# 100 (Millisecond)
+   	timeout = 100
 `
 
 type Config struct {
-	Target string        `toml:"target"`
-	Port   string	     `toml:"port"`
-	Process  uint64         `toml:"process"`
-	Timeout time.Duration `toml:"timeout"`
+	Protocol []string	  `toml:"protocol"`
+	Target   string       `toml:"target"`
+	Port     string	      `toml:"port"`
+	Process  uint64       `toml:"process"`
+	Timeout  uint         `toml:"timeout"`
 }
-
 
 var (
 	cfg *Config
