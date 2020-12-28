@@ -60,6 +60,8 @@ Golang Version: %s
 			os.Exit(0)
 	}
 
+	cfg.Process = 100
+
 	s :=scan.NewScan(cfg.Target, cfg.Port, cfg.Process)
 
 	s.Run()
