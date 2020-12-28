@@ -4,11 +4,11 @@ import (
 	"github.com/BurntSushi/toml"
 	"sync"
 	"path/filepath"
+	"time"
 )
 
 const simpleCfg  = `
 [scanport]
-[httpServer]
    # 扫描的目标ip
    target = "127.0.0.1"
    port = "8000-30000"
@@ -18,8 +18,8 @@ const simpleCfg  = `
 type Config struct {
 	Target string        `toml:"target"`
 	Port   string	     `toml:"port"`
-	Count  int           `toml:"count"`
-	// Timeout time.Durtion `toml:"timeout"`
+	Process  uint64         `toml:"process"`
+	Timeout time.Duration `toml:"timeout"`
 }
 
 

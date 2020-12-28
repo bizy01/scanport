@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	// "github.com/bizy01/scanport/config"
+	"github.com/bizy01/scanport/config"
 	"github.com/bizy01/scanport/util"
 	"github.com/bizy01/scanport/pool"
 	"os"
@@ -16,25 +16,29 @@ import (
 var wg = sync.WaitGroup{}
 
 type Scanport struct{
-	Target string
-	Port   string
+    config.Config
 	IPs []string
 	Ports []int
 	Result   []string
-	Timeout time.Duration
-	MaxProcess int
 	debug bool
 	pool *pool.Pool
 	ResChan chan string
+	capacity uint64
 }
 
-func NewScan(target, port string) *Scanport {
+func NewScan(target, port string, process uint64) *Scanport {
 	scan := &Scanport{
-		ResChan: make(chan string, 100),
+		ResChan: make(chan string, process),
 	}
 
 	scan.Target = target
 	scan.Port = port
+
+	scan.capacity = process
+
+	if process == 0 {
+		scan.capacity = 100
+	}
 
   return scan
 }
@@ -107,7 +111,12 @@ func (s *Scanport) getAllPort()  {
 }
 
 func (s *Scanport) Run() {
-	s.pool, _ = pool.NewPool(100)
+	var err error
+
+	s.pool, err = pool.NewPool(1000)
+	if err != nil {
+		fmt.Println("error", err)
+	}
 	s.getAllIP()
 	s.getAllPort()
 	s.scan()
