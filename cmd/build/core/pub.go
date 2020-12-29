@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"log"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -36,7 +37,7 @@ func (c *Compiler) tarFiles(goos, goarch string) string {
 
 	err := cmd.Run()
 	if err != nil {
-		l.Fatal(err)
+		log.Println(err)
 	}
 
 	return gz
@@ -47,7 +48,7 @@ func (c *Compiler) PubOSS() {
 
 	if _, err := os.Stat(c.BuildDir); err != nil {
 		c.Compile()
-		l.Fatal(err)
+		log.Println(err)
 	}
 
 	var ak, sk, bucket, ossHost string
@@ -61,11 +62,11 @@ func (c *Compiler) PubOSS() {
 		bucket = os.Getenv(tag + "_OSS_BUCKET")
 		ossHost = os.Getenv(tag + "_OSS_HOST")
 	default:
-		l.Fatalf("unknown release type: %s", c.Release)
+		log.Printf("unknown release type: %s", c.Release)
 	}
 
 	if ak == "" || sk == "" {
-		l.Fatalf("oss access key or secret key missing, tag=%s", strings.ToUpper(c.Release))
+		log.Printf("oss access key or secret key missing, tag=%s", strings.ToUpper(c.Release))
 	}
 
 	oc := &cliutils.OssCli{
@@ -78,7 +79,7 @@ func (c *Compiler) PubOSS() {
 	}
 
 	if err := oc.Init(); err != nil {
-		l.Fatal(err)
+		log.Println(err)
 	}
 	// upload all build archs
 	archs := []string{runtime.GOOS + "/" + runtime.GOARCH}
@@ -89,7 +90,7 @@ func (c *Compiler) PubOSS() {
 	for _, arch := range archs {
 		parts := strings.Split(arch, "/")
 		if len(parts) != 2 {
-			l.Fatalf("invalid arch %q", parts)
+			log.Printf("invalid arch %q", parts)
 		}
 		goos, goarch := parts[0], parts[1]
 
@@ -101,18 +102,18 @@ func (c *Compiler) PubOSS() {
 	// test if all file ok before uploading
 	for k, _ := range ossfiles {
 		if _, err := os.Stat(k); err != nil {
-			l.Fatal(err)
+			log.Println(err)
 		}
 	}
 
 	for k, v := range ossfiles {
 		fi, _ := os.Stat(k)
-		l.Debugf("upload %s(%s)...", k, humanize.Bytes(uint64(fi.Size())))
+		log.Printf("upload %s(%s)...", k, humanize.Bytes(uint64(fi.Size())))
 
 		if err := oc.Upload(k, v); err != nil {
-			l.Fatal(err)
+			log.Println(err)
 		}
 	}
 
-	l.Infof("Done!(elapsed: %v)", time.Since(start))
+	log.Printf("Done!(elapsed: %v)", time.Since(start))
 }

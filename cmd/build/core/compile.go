@@ -3,13 +3,13 @@ package core
 import (
 	"fmt"
 	"os"
+	"log"
 	"os/exec"
 	"path/filepath"
 	"path"
 	"runtime"
 	"strings"
 	"time"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 )
 
@@ -54,10 +54,6 @@ func runEnv(args, env []string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-var (
-	l = logrus.New()
-)
-
 func (c *Compiler) Compile() {
 	start := time.Now()
 
@@ -78,7 +74,7 @@ func (c *Compiler) Compile() {
 	for idx, _ := range archs {
 		parts := strings.Split(archs[idx], "/")
 		if len(parts) != 2 {
-			l.Fatalf("invalid arch %q", parts)
+			log.Printf("invalid arch %q\n", parts)
 		}
 
 		goos, goarch := parts[0], parts[1]
@@ -87,18 +83,18 @@ func (c *Compiler) Compile() {
 
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
-			l.Fatalf("failed to mkdir: %v", err)
+			log.Printf("failed to mkdir: %v", err)
 		}
 
 		dir, err = filepath.Abs(dir)
 		if err != nil {
-			l.Fatal(err)
+			log.Println(err)
 		}
 
 		compileArch(c.MainEntry, c.AppBin, goos, goarch, dir, c.Version)
 	}
 
-	l.Infof("Done!(elapsed %v)", time.Since(start))
+	log.Printf("Done!(elapsed %v)", time.Since(start))
 }
 
 func compileArch(mainEntry, bin, goos, goarch, dir, version string) {
@@ -116,10 +112,10 @@ func compileArch(mainEntry, bin, goos, goarch, dir, version string) {
 		"GOARCH=" + goarch,
 	}
 
-	l.Debugf("building %s", fmt.Sprintf("%s-%s/%s", goos, goarch, bin))
+	log.Printf("building %s", fmt.Sprintf("%s-%s/%s", goos, goarch, bin))
 	msg, err := runEnv(args, env)
 	if err != nil {
-		l.Fatalf("failed to run %v, envs: %v: %v, msg: %s", args, env, err, string(msg))
+		log.Printf("failed to run %v, envs: %v: %v, msg: %s", args, env, err, string(msg))
 	}
 }
 
@@ -160,11 +156,11 @@ func copyDir(src string, dst string) error {
 
         if fd.IsDir() {
             if err = copyDir(srcfp, dstfp); err != nil {
-                l.Error(err)
+                log.Println(err)
             }
         } else {
             if err = copyFile(srcfp, dstfp); err != nil {
-                l.Error(err)
+                log.Println(err)
             }
         }
     }
