@@ -1,12 +1,4 @@
-package config
 
-import (
-	"github.com/BurntSushi/toml"
-	"sync"
-	"path/filepath"
-)
-
-const simpleCfg  = `
 [scanport]
 	## 【扫描的协议】
 	# default:
@@ -40,35 +32,3 @@ const simpleCfg  = `
    	# default
    	# 100 (Millisecond)
    	timeout = 100
-`
-
-type Config struct {
-	Protocol string	      `toml:"protocol"`
-	Target   string       `toml:"target"`
-	Port     string	      `toml:"port"`
-	Process  uint64       `toml:"process"`
-	Timeout  int          `toml:"timeout"`
-}
-
-var (
-	cfg Config
-	once sync.Once
-)
-
-func GetConfig(path string) Config {
-	once.Do(func() {
-		filePath, err := filepath.Abs(path)
-		if err != nil {
-			panic(err)
-		}
-		if _ , err := toml.DecodeFile(filePath, &cfg); err != nil {
-			panic(err)
-		}
-	})
-
-	return cfg
-}
-
-func InitConfig() []byte {
-   return []byte(simpleCfg)
-}

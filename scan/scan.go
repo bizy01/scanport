@@ -19,28 +19,26 @@ type Scanport struct{
     config.Config
 	IPs []string
 	Ports []int
-	Result   []string
-	debug bool
 	pool *pool.Pool
 	ResChan chan string
-	capacity uint64
 }
 
-func NewScan(target, port string, process uint64) *Scanport {
+func NewScan(cfg config.Config) (*Scanport, error) {
 	scan := &Scanport{
-		ResChan: make(chan string, process),
+		ResChan: make(chan string, cfg.Process),
 	}
 
-	scan.Target = target
-	scan.Port = port
+	scan.Config = cfg
 
-	scan.capacity = process
+	// new pool
+	var err error
 
-	if process == 0 {
-		scan.capacity = 100
+	scan.pool, err = pool.NewPool(scan.Process)
+	if err != nil {
+		return scan, err
 	}
 
-  return scan
+  return scan, nil
 }
 
 var res []string
@@ -111,35 +109,35 @@ func (s *Scanport) getAllPort()  {
 }
 
 func (s *Scanport) Run() {
-	var err error
-
-	s.pool, err = pool.NewPool(1000)
-	if err != nil {
-		fmt.Println("error", err)
-	}
 	s.getAllIP()
 	s.getAllPort()
 	s.scan()
 }
 
 func (s *Scanport) scan() {
-	for _, ip := range s.IPs {
-		for _, port := range s.Ports {
-			// 协称池
-			wg.Add(1)
-			task := &pool.Task{
-				Handler: func(v ...interface{}) {
-					defer wg.Done()
-					if isOpen("tcp", v[0].(string), v[1].(int)) {
-						s.ResChan <- fmt.Sprintf("%v:%v", v[0], v[1])
-					}
-				},
-				Params: []interface{}{ip, port},
-			}
+	proto := strings.Split(s.Protocol, ",")
 
-			s.pool.Put(task)
+	for _, protocol := range proto {
+		for _, ip := range s.IPs {
+			for _, port := range s.Ports {
+				// 协称池
+				wg.Add(1)
+				task := &pool.Task{
+					Handler: func(v ...interface{}) {
+						defer wg.Done()
+						if isOpen(v[0].(string), v[1].(string), v[2].(int)) {
+							fmt.Printf("========> %v:%v\n", v[1], v[2])
+							s.ResChan <- fmt.Sprintf("%v:%v", v[1], v[2])
+						}
+					},
+					Params: []interface{}{strings.Trim(protocol, ""), ip, port},
+				}
+
+				s.pool.Put(task)
+			}
 		}
 	}
+
 
 	wg.Wait()
 	close(s.ResChan)
