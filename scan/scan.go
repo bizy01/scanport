@@ -6,7 +6,7 @@ import (
 	"net"
 	"strings"
 	"github.com/bizy01/scanport/config"
-	"github.com/bizy01/scanport/util"
+	"github.com/bizy01/scanport/cliutils"
 	"github.com/bizy01/scanport/pool"
 	"os"
 	"log"
@@ -57,15 +57,15 @@ func (s *Scanport) getAllIP() {
 
 	for _, target := range targets {
 		target = strings.TrimSpace(target)
-		if util.IsIP(target) {
+		if cliutils.IsIP(target) {
 			res = append(res, target)
-		} else if util.IsDNS(target) {
+		} else if cliutils.IsDNS(target) {
 			// 添加ip
-			ip, _ := util.ParseDNS(target)
+			ip, _ := cliutils.ParseDNS(target)
 			res = append(res, ip)
-		} else if util.IsCIDR(target) {
+		} else if cliutils.IsCIDR(target) {
 			// crdr解析
-			cidrIp, _ := util.ParseCIDR(target)
+			cidrIp, _ := cliutils.ParseCIDR(target)
 			res = append(res, cidrIp...)
 		}
 	}
@@ -86,7 +86,7 @@ func (s *Scanport) getAllPort()  {
 
 	for _, v := range portArr {
 		portArr2 := strings.Split(strings.Trim(v, "-"), "-")
-		startPort, err := util.FilterPort(portArr2[0])
+		startPort, err := cliutils.FilterPort(portArr2[0])
 		if err != nil {
 			continue
 		}
@@ -94,7 +94,7 @@ func (s *Scanport) getAllPort()  {
 		ports = append(ports, startPort)
 		if len(portArr2) > 1 {
 			//添加第一个后面的所有端口
-			endPort, _ := util.FilterPort(portArr2[1])
+			endPort, _ := cliutils.FilterPort(portArr2[1])
 			if endPort > startPort {
 				for i := 1; i <= endPort-startPort; i++ {
 					ports = append(ports, startPort+i)
@@ -103,7 +103,7 @@ func (s *Scanport) getAllPort()  {
 		}
 	}
 	//去重复
-	ports = util.ArrayUnique(ports)
+	ports = cliutils.ArrayUnique(ports)
 
 	s.Ports = ports
 }
@@ -126,8 +126,7 @@ func (s *Scanport) scan() {
 					Handler: func(v ...interface{}) {
 						defer wg.Done()
 						if isOpen(v[0].(string), v[1].(string), v[2].(int)) {
-							fmt.Printf("========> %v:%v\n", v[1], v[2])
-							s.ResChan <- fmt.Sprintf("%v:%v", v[1], v[2])
+							s.ResChan <- fmt.Sprintf("%v:%v:%v",v[0], v[1], v[2])
 						}
 					},
 					Params: []interface{}{strings.Trim(protocol, ""), ip, port},
@@ -162,7 +161,8 @@ func isOpen(proto string, ip string, port int) bool {
 // 结果输出
 func (s *Scanport) Output() {
 	for item := range  s.ResChan {
-		fmt.Println("开放端口:", item)
+		res := strings.Split(item, ":")
+		fmt.Printf("协议类型: %v  扫描目标: %-15v  开放端口: %-5v\n", res[0], res[1], res[2])
 	}
 }
 

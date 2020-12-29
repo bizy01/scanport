@@ -1,4 +1,4 @@
-.PHONY: default dev
+.PHONY: default dev build_img
 
 default: dev
 
@@ -43,7 +43,7 @@ export GIT_INFO
 define build
 	@echo "===== $(BIN) ===="
 	@rm -rf $(PUB_DIR)/$(1)/*
-	@mkdir -p $(BUILD_DIR) $(PUB_DIR)/$(1)
+	@mkdir -p $(BUILD_DIR) $(PUB_DIR)
 	@mkdir -p git
 	@echo "$$GIT_INFO" > git/git.go
 	@CGO_ENABLED=0 go run cmd/build/build.go -main $(ENTRY) -binary $(BIN) -name $(NAME) -build-dir $(BUILD_DIR) -archs $(1)
@@ -72,12 +72,15 @@ release:
 pub: release
 	$(call pub, release, $(RELEASE_DOWNLOAD_ADDR))
 
-pub_img:
-	# release to pub hub
-	@mkdir -p embed/linux-amd64
-	@sudo docker build -t echoServer:$(VERSION) .
-	@sudo docker push echoServer:$(VERSION)
+build_img:dev
+	@docker build -t scanport:$(VERSION) .
+
+pub_image:build_img
+	@docker tag scanport:$(VERSION) bizy01/scanport:latest
+	@docker push bizy01/scanport:latest
 
 clean:
-	rm -rf build/*
-	rm -rf $(PUB_DIR)/*
+	rm -rf dist/*
+
+clean_img:
+	docker rmi -rf scanport:**

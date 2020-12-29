@@ -3,14 +3,12 @@ package core
 import (
 	"fmt"
 	"os"
+	"log"
 	"os/exec"
 	"path/filepath"
-	"path"
 	"runtime"
 	"strings"
 	"time"
-	"github.com/sirupsen/logrus"
-	"io/ioutil"
 )
 
 var (
@@ -23,9 +21,7 @@ var (
 		`linux/amd64`,
 		`linux/arm`,
 		`linux/arm64`,
-
 		`darwin/amd64`,
-
 		`windows/amd64`,
 		`windows/386`,
 	}
@@ -54,15 +50,11 @@ func runEnv(args, env []string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-var (
-	l = logrus.New()
-)
-
 func (c *Compiler) Compile() {
 	start := time.Now()
 
 	os.RemoveAll(c.BuildDir)
-	_ = os.MkdirAll(c.BuildDir, os.ModePerm)
+	// _ = os.MkdirAll(c.BuildDir, os.ModePerm)
 
 	var archs []string
 
@@ -78,27 +70,22 @@ func (c *Compiler) Compile() {
 	for idx, _ := range archs {
 		parts := strings.Split(archs[idx], "/")
 		if len(parts) != 2 {
-			l.Fatalf("invalid arch %q", parts)
+			log.Printf("invalid arch %q\n", parts)
 		}
 
 		goos, goarch := parts[0], parts[1]
 
 		dir := fmt.Sprintf("%s/%s-%s-%s", c.BuildDir, c.AppName, goos, goarch)
 
-		err := os.MkdirAll(dir, os.ModePerm)
+		dir, err := filepath.Abs(dir)
 		if err != nil {
-			l.Fatalf("failed to mkdir: %v", err)
-		}
-
-		dir, err = filepath.Abs(dir)
-		if err != nil {
-			l.Fatal(err)
+			log.Println(err)
 		}
 
 		compileArch(c.MainEntry, c.AppBin, goos, goarch, dir, c.Version)
 	}
 
-	l.Infof("Done!(elapsed %v)", time.Since(start))
+	log.Printf("Done!(elapsed %v)", time.Since(start))
 }
 
 func compileArch(mainEntry, bin, goos, goarch, dir, version string) {
@@ -116,60 +103,14 @@ func compileArch(mainEntry, bin, goos, goarch, dir, version string) {
 		"GOARCH=" + goarch,
 	}
 
-	l.Debugf("building %s", fmt.Sprintf("%s-%s/%s", goos, goarch, bin))
+	log.Printf("building %s", fmt.Sprintf("%s-%s/%s", goos, goarch, bin))
 	msg, err := runEnv(args, env)
 	if err != nil {
-		l.Fatalf("failed to run %v, envs: %v: %v, msg: %s", args, env, err, string(msg))
+		log.Printf("failed to run %v, envs: %v: %v, msg: %s", args, env, err, string(msg))
 	}
 }
 
-func copyFile(source, dist string) error {
-	input, err := ioutil.ReadFile(source)
-	if err != nil {
-	   return err
-	}
 
-	err = ioutil.WriteFile(dist, input, 0644)
-	if err != nil {
-	   return err
-	}
-
-	return nil
-}
-
-// Dir copies a whole directory recursively
-func copyDir(src string, dst string) error {
-    var err error
-    var fds []os.FileInfo
-    var srcinfo os.FileInfo
-
-    if srcinfo, err = os.Stat(src); err != nil {
-        return err
-    }
-
-    if err = os.MkdirAll(dst, srcinfo.Mode()); err != nil {
-        return err
-    }
-
-    if fds, err = ioutil.ReadDir(src); err != nil {
-        return err
-    }
-    for _, fd := range fds {
-        srcfp := path.Join(src, fd.Name())
-        dstfp := path.Join(dst, fd.Name())
-
-        if fd.IsDir() {
-            if err = copyDir(srcfp, dstfp); err != nil {
-                l.Error(err)
-            }
-        } else {
-            if err = copyFile(srcfp, dstfp); err != nil {
-                l.Error(err)
-            }
-        }
-    }
-    return nil
-}
 
 
 

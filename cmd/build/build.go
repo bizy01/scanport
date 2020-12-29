@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"github.com/sirupsen/logrus"
 	"github.com/bizy01/scanport/cmd/build/core"
 )
 
@@ -21,8 +20,6 @@ var (
 	flagPubDir       = flag.String("pub-dir", "pub", "")
 	flagVersion      = flag.String("version", "", "version")
 	flagEnv          = flag.String(`env`, ``, `build for dev/release`)
-
-	l = logrus.New()
 )
 
 func main() {
@@ -39,7 +36,7 @@ func main() {
 		Pub: *flagPub,
 		MainEntry: *flagMain,
 		Version: *flagVersion,
-		OSSPath: "echoServer",
+		OSSPath: "scanport",
 	}
 
 	// 编译
