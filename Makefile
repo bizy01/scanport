@@ -43,7 +43,7 @@ export GIT_INFO
 define build
 	@echo "===== $(BIN) ===="
 	@rm -rf $(PUB_DIR)/$(1)/*
-	@mkdir -p $(BUILD_DIR) $(PUB_DIR)/$(1)
+	@mkdir -p $(BUILD_DIR) $(PUB_DIR)
 	@mkdir -p git
 	@echo "$$GIT_INFO" > git/git.go
 	@CGO_ENABLED=0 go run cmd/build/build.go -main $(ENTRY) -binary $(BIN) -name $(NAME) -build-dir $(BUILD_DIR) -archs $(1)
