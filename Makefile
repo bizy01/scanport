@@ -74,7 +74,6 @@ pub: release
 
 pub_img:
 	# release to pub hub
-	@mkdir -p embed/linux-amd64
 	@sudo docker build -t echoServer:$(VERSION) .
 	@sudo docker push echoServer:$(VERSION)
 
