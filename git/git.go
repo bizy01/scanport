@@ -1,10 +1,10 @@
 //nolint
 package git
 const (
-	BuildAt string="2020-12-29 07:31:07"
-	Version string="3c612eb"
+	BuildAt string="2020-12-29 08:26:30"
+	Version string="705fbee"
 	Golang string="go version go1.14 darwin/amd64"
-	Commit string="3c612eb"
+	Commit string="705fbee"
 	Branch string="dev"
 	Uploader string="liushaobodeMacBook-Pro.local/liushaobo/liushaobo"
 );

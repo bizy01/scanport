@@ -76,7 +76,7 @@ build_img:dev
 	@docker build -t scanport:$(VERSION) .
 
 pub_image:build_img
-	@docker tag -f scanport:$(VERSION) bizy01/scanport:latest
+	@docker tag scanport:$(VERSION) bizy01/scanport:latest
 	@docker push bizy01/scanport:latest
 
 clean:
