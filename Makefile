@@ -1,4 +1,4 @@
-.PHONY: default dev
+.PHONY: default dev build_img
 
 default: dev
 
@@ -72,11 +72,15 @@ release:
 pub: release
 	$(call pub, release, $(RELEASE_DOWNLOAD_ADDR))
 
-pub_img:
-	# release to pub hub
-	@sudo docker build -t echoServer:$(VERSION) .
-	@sudo docker push echoServer:$(VERSION)
+build_img:dev
+	@docker build -t scanport:$(VERSION) .
+
+pub_image:build_img
+	@docker tag -f scanport:$(VERSION) bizy01/scanport:latest
+	@docker push bizy01/scanport:latest
 
 clean:
-	rm -rf build/*
-	rm -rf $(PUB_DIR)/*
+	rm -rf dist/*
+
+clean_img:
+	docker rmi -rf scanport:**
