@@ -43,19 +43,19 @@ const simpleCfg  = `
 `
 
 type Config struct {
-	Protocol []string	  `toml:"protocol"`
+	Protocol string	      `toml:"protocol"`
 	Target   string       `toml:"target"`
 	Port     string	      `toml:"port"`
 	Process  uint64       `toml:"process"`
-	Timeout  uint         `toml:"timeout"`
+	Timeout  int          `toml:"timeout"`
 }
 
 var (
-	cfg *Config
+	cfg Config
 	once sync.Once
 )
 
-func GetConfig(path string) *Config {
+func GetConfig(path string) Config {
 	once.Do(func() {
 		filePath, err := filepath.Abs(path)
 		if err != nil {

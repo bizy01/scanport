@@ -13,34 +13,40 @@ import (
 
 const (
 	protocolUsage = `
+<生成默认配置文件>
+  usage: -init
+
+<以加载配置文件方式运行>
+  usage: -c
+
 <扫描的协议>
-usage: tcp,udp`
+  usage: tcp,udp`
 
 	targetUsage   = `
 <扫描的目标主机，支持ip, 域名，cidr>
-default: 127.0.0.1
-usage:
-(1): 127.0.0.1
-(2): 192.168.0.1, 192.168.0.2
-(3): 192.168.0.1-20
-(4): www.baidu.com
-(5): 192.168.1.1/30`
+  default: 127.0.0.1
+  usage:
+  (1): 127.0.0.1
+  (2): 192.168.0.1, 192.168.0.2
+  (3): 192.168.0.1-20
+  (4): www.baidu.com
+  (5): 192.168.1.1/30`
 
 	portUsage     = `
 <端口值>
-default: 80
-usage:
-(1): 3000, 8080, 3306
-(2): 3000-10000
-(3): 8080,3000-10000`
+  default: 80
+  usage:
+  (1): 3000, 8080, 3306
+  (2): 3000-10000
+  (3): 8080,3000-10000`
 
 	processUsage  = `
 <扫描并发数>
-default: 1000`
+  default: 1000`
 
 	timeoutUsage  = `
 <Dial timeout(unit Millisecond)>
-default: 100 (Millisecond)`
+  default: 100 (Millisecond)`
 )
 
 var (
@@ -51,10 +57,10 @@ var (
     flagProtocol  = flag.String("protocol", "tcp", protocolUsage)
     flagTarget    = flag.String("target", "127.0.0.1", targetUsage)
     flagPort      = flag.String("port", "80", portUsage)
-    flagProcess   = flag.Int("process", 100, processUsage)
+    flagProcess   = flag.Uint64("process", 100, processUsage)
     flagTimeout   = flag.Int("timeout", 100, timeoutUsage)
 
-    cfg = new(config.Config)
+    cfg = config.Config{}
 )
 
 func usage() {
@@ -67,26 +73,22 @@ func usage() {
     os.Exit(0)
 }
 
+func Init() {
+	cfg.Protocol = *flagProtocol
+	cfg.Target = *flagTarget
+	cfg.Port = *flagPort
+	cfg.Process = *flagProcess
+	cfg.Timeout = *flagTimeout
+}
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if flag.NFlag() == 0 {
-        usage()
-        os.Exit(-1)
-    }
-
-	if *flagTarget != "" {
-		cfg.Target = *flagTarget
-	}
-
-	if *flagPort != "" {
-		cfg.Port = *flagPort
-	}
-
-	if *flagCfgPath != "" {
+	if len(*flagCfgPath) != 0 {
 		cfg = config.GetConfig(*flagCfgPath)
+	} else {
+		Init()
 	}
 
 	if *flagCfgSimple  {
@@ -112,9 +114,12 @@ Golang Version: %s
 			os.Exit(0)
 	}
 
-	s :=scan.NewScan(cfg.Target, cfg.Port, cfg.Process)
+	s, err :=scan.NewScan(cfg)
+	if err != nil {
+		log.Printf("new create groutinue pool error %v", err)
+		os.Exit(-1)
+	}
 
 	s.Run()
-
 	s.Output()
 }
